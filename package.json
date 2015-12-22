@@ -1,0 +1,12 @@
+{
+  "name": "pegjs-failure-tracer",
+  "version": "0.1.0",
+  "description": "A failure path tracer module for pegjs.",
+  "main": "src/main.js",
+  "scripts": {},
+  "keywords": ["pegjs","tracer"],
+  "author": "Mitsutaka Okazaki",
+  "license": "ISC",
+  "dependencies": {
+  }
+}
