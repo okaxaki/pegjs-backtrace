@@ -1,7 +1,7 @@
 {
-  "name": "pegjs-failure-tracer",
+  "name": "pegjs-backtrace",
   "version": "0.1.0",
-  "description": "A failure path tracer module for pegjs.",
+  "description": "A debug backtrace module for pegjs.",
   "main": "src/main.js",
   "scripts": {},
   "keywords": ["pegjs","tracer"],
