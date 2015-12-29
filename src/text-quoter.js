@@ -2,9 +2,7 @@
 
 var defaultOptions = {
 	useColor:true,
-	quoteString:"> ",
-	highlightStyle:{color:'cyan',attribute:'underline'},
-	cursorStyle:{color:'cyan',attribute:'reverse'}
+	highlightStyle:{color:'cyan'},
 };
 
 var COLOR_MAP = { black:0, red:1, green:2, yellow:3, blue:4, magenta:5, cyan:6, white:7 };
@@ -19,23 +17,23 @@ var _applyDefault = function(opt,def) {
 };
 
 var _setTextStyle = function(str,style,start,end) {
+	if(!style) return str;
+
 	var buf = [];
 	if(style.color!=null) { buf.push('3'+(COLOR_MAP[style.color]||7)); }
 	if(style.background!=null) { buf.push('4'+(COLOR_MAP[style.background]||7)); }
 	if(style.attribute!=null) {	buf.push(''+(ATTR_MAP[style.attribute]||'')); }
 	if(0<buf.length) {
 		if(start===undefined) {
-			return "\u001b[" + buf.join(';') + "m" + str + "\u001b[m";
+			return "\x1b[" + buf.join(';') + "m" + str + "\x1b[0m";
 		}
 		end = end?end:str.length;
-		return str.slice(0,start) +
-		"\u001b[" + buf.join(';') + "m" + 
-		str.slice(start,end) + "\u001b[m" +
-		str.slice(end);
+		return str.slice(0,start) + "\x1b[" + buf.join(';') + "m" + str.slice(start,end) + "\x1b[0m" + str.slice(end);
 	} else {
 		return str;
 	}
 };
+
 
 var __space__ = "                                                                       ";
 
@@ -64,7 +62,12 @@ TextQuoter.prototype.setTextStyle = function(str,style,start,end) {
 	}
 }
 
-TextQuoter.prototype.getQuotedLines = function(startLine,startColumn,endLine,endColumn,maxLines) {
+TextQuoter.prototype.makeOverline = function(indent,length,ch) {
+	return _makeIndent(indent) + this.setTextStyle(
+		_makeIndent(length).replace(/ /g,ch),this.options.highlightStyle);
+};
+
+TextQuoter.prototype.getQuotedLines = function(quoteString,startLine,startColumn,endLine,endColumn,maxLines) {
 
 	maxLines = (!maxLines||maxLines<3)?3:maxLines;
 
@@ -81,9 +84,7 @@ TextQuoter.prototype.getQuotedLines = function(startLine,startColumn,endLine,end
 
 	var style = this.options.highlightStyle;
 	if(startLine == endLine) {
-		if(startColumn==endColumn) {
-			lines[0] = this.setTextStyle(lines[0],this.options.cursorStyle,startColumn,endColumn+1);
-		} else if(startColumn<endColumn) {
+		if(startColumn<endColumn) {
 			lines[0] = this.setTextStyle(lines[0],style,startColumn,endColumn);
 		}
 	} else {
@@ -98,13 +99,19 @@ TextQuoter.prototype.getQuotedLines = function(startLine,startColumn,endLine,end
 		lines = lines.slice(0,numHeadLines).concat(['...']).concat(lines.slice(lines.length-numTailLines));
 	}
 
+	if(startLine==endLine&&startColumn<=endColumn) {
+		lines.push(this.makeOverline(startColumn, (endColumn-startColumn)||1, '^'));
+	} else if(startLine<endLine) {
+		lines.unshift(this.makeOverline(startColumn,(lines[0].length-startColumn),'>'));
+		lines.push(this.makeOverline(0,endColumn,'<'));
+	}
 	var self = this;
-	lines = lines.map(function(e){return self.options.quoteString + e;});
+	lines = lines.map(function(e){return quoteString + e;});
 	return lines;
 };
 
-TextQuoter.prototype.getQuotedText = function(startLine,startColumn,endLine,endColumn,maxLines) {
-	return this.getQuotedLines(startLine,startColumn,endLine,endColumn,maxLines).join('\n');
+TextQuoter.prototype.getQuotedText = function(quoteString,startLine,startColumn,endLine,endColumn,maxLines) {
+	return this.getQuotedLines(quoteString,startLine,startColumn,endLine,endColumn,maxLines).join('\n');
 };
 
 
