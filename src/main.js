@@ -127,14 +127,6 @@ Tracer.prototype.getSourceLines = function(quoteString,location,maxLines) {
 		maxLines);
 };
 
-Tracer.prototype.getSourceText = function(quoteString,location,maxLines) {
-	var location = _convertToZeroBasedLocation(location);
-	return this.quoter.getQuotedText(quoteString,
-		location.start.line,location.start.column,
-		location.end.line,location.end.column,
-		maxLines);
-};
-
 Tracer.prototype.isHidden = function(node) {
 	var path = node.path + node.rule;
 	for(var i=0;i<this.hiddenPatterns.length;i++) {
@@ -230,7 +222,7 @@ Tracer.prototype.onMatch = function(evt) {
 Tracer.prototype.buildNodeText = function(node,source) {
 	var buf = [];
 	buf.push( 
-		this.setTextStyle(node.location.start.line + ":" + node.location.start.column + "-" + node.location.end.line + ":" + node.location.end.column,{attribute:'thin'}) 
+		this.setTextStyle("(" + node.location.start.line + ":" + node.location.start.column + "-" + node.location.end.line + ":" + node.location.end.column+")",{attribute:'thin'}) 
 		+ " " + 
 		this.setTextStyle(node.rule,{color:"yellow",attribute:'bold'})
 	);
@@ -244,44 +236,10 @@ Tracer.prototype.buildNodeText = function(node,source) {
 	return buf;
 };
 
-Tracer.prototype.dumpNode = function(node,source) {
+Tracer.prototype.getParseTree = function(failPathOnly,node) {
 
-	if(this.isHidden(node)) {
-		return "";
-	}
-
-	var buf = [];
-	var prefix = (node.parent!==this.root)?this.setTextStyle("|",{color:'yellow'}):" ";
-	buf.push(this.headStringMap[node.type]||this.headStringMap.error);
-	buf.push(this.setTextStyle(node.rule,{color:"yellow"}) + "\n");
-	buf.push(prefix + " " + node.location.start.line + ":" + node.location.start.column + "-");
-	buf.push(node.location.end.line + ":" + node.location.end.column);
-	buf.push("\n");
-	if(source) {
-		buf.push(this.getSourceText(prefix+" ",node.location,this.options.maxSourceLines)+'\n');
-	}
-
-	return buf.join('');
-};
-
-Tracer.prototype.getVisibleFails = function() {	
-	var nodes = [];
-	for(var i=0;i<this.maxFails.length;i++) {
-		var node = this.maxFails[i];
-		while(node.parent!=this.root&&this.isHidden(node)) {
-			node = node.parent;
-		}
-		if(nodes.indexOf(node)<0) {
-			nodes.push(node);
-		}
-	}
-	return nodes;
-};
-
-Tracer.prototype.getFailTree = function(node) {
-
-	var children = [], i, c;
 	node = node || this.root;
+	var children = [], i, c;
 
 	var ret = {
 		parent:null,
@@ -293,7 +251,7 @@ Tracer.prototype.getFailTree = function(node) {
 	};
 
 	for(i=0;i<node.matches.length;i++) {
-		c = this.getFailTree(node.matches[i]);
+		c = this.getParseTree(failPathOnly,node.matches[i]);
 		if(c) {
 			c.parent = ret;
 			children.push(c);
@@ -301,14 +259,14 @@ Tracer.prototype.getFailTree = function(node) {
 	}
 
 	for(i=0;i<node.fails.length;i++) {
-		c = this.getFailTree(node.fails[i]);
+		c = this.getParseTree(failPathOnly,node.fails[i]);
 		if(c) {
 			c.parent = ret;
 			children.push(c);
 		}
 	}
 
-	if(children.length == 0 && this.maxFails.indexOf(node)<0) {
+	if(children.length == 0 && failPathOnly && this.maxFails.indexOf(node)<0) {
 		return null;
 	}
 
@@ -334,29 +292,16 @@ var treeToLinear = function(tree) {
 	return buf;
 };
 
-Tracer.prototype.dumpBacktrace = function() {
-	var ret = '';
-	for(var i=0;i<this.maxFails.length;i++) {
-		ret += 'Failure ' + (i+1) + ' of ' + this.maxFails.length + "\n";
-		var node = this.maxFails[i];
-		while(node!=null&&node!=this.root) {
-			ret += this.dumpNode(node, this.options.verbose);
-			node = node.parent;
-		}
-		ret += "\n";
-	}
-	return ret;
-};
-
 Tracer.prototype.dumpBacktraceTree = function() {
 
 	var lines = [];
-	var tree = this.getFailTree();
+	var tree = this.getParseTree(true);
 	var list = treeToLinear(tree).reverse();
 	list.shift();// remove the root
 
 	var nodes = [];
-	var gd = require('./graph.js');
+	var TextGraph = require('./graph.js');
+	var gd = new TextGraph({useColor:this.options.useColor});
 
 	var styles = [
 		{color:'yellow'},
@@ -389,7 +334,7 @@ Tracer.prototype.dumpBacktraceTree = function() {
 			lines = lines.concat( gd.drawState(nodes,column,this.buildNodeText(node,this.options.verbose)) );
 		} else {
 			column = parentIndexes.shift();
-			lines = lines.concat(gd.drawMerge(parentIndexes,column,nodes));
+			lines = lines.concat(gd.drawMergeEdges(parentIndexes,column,nodes));
 			node.style = nodes[column].style;
 			nodes[column] = node;
 			nodes = nodes.filter(function(e,i) {return (parentIndexes.indexOf(i)<0);});
