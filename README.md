@@ -1,5 +1,5 @@
 # pegjs-backtrace
-A tracer module for PEG.js which generates a visual backtrace tree when the parser fails.
+A tracer module for [PEG.js](http://pegjs.org/) which generates a visual backtrace tree when the parser fails.
 
 This module also supports normal tracing output. See [showTrace](#showTrace) option for detail.
 
@@ -37,7 +37,7 @@ npm install https://github.com/okaxaki/pegjs-backtrace
 
 # Usage
 
-pegjs-backtrace is implemented as a Tracer. When calling the `parse` function, pass the pegjs-backtrace instance to the `tracer` option.
+pegjs-backtrace is implemented as a [Tracer](https://github.com/pegjs/pegjs/commit/da57118a43a904f753d44d407994cf0b36358adc). When calling the `parse` function, pass the pegjs-backtrace instance to the `tracer` option.
 Then, after parser fails, you can obtain the backtrace string from `getBacktraceString()`.
 
 ```
