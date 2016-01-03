@@ -245,10 +245,11 @@ Tracer.prototype.buildNodeText = function(node,withSource,quoteString) {
 		node.location.end.line, ":", node.location.end.column, 
 		].join('');
 
-	var title = [
-		this.setTextStyle("#" + node.number,{attribute:'thin'}), 
-		this.setTextStyle(location,{attribute:'thin'})
-		];
+	var title = [];
+	if(this.options.showTrace) {
+		title.push(this.setTextStyle("#" + node.number,{attribute:'thin'}));
+	}	
+	title.push(this.setTextStyle(location,{attribute:'thin'}));
 
 	if(this.options.showFullPath) {
 		title.push(this.setTextStyle(TextUtil.truncate(node.path,this.options.maxPathLength) + node.rule,{color:"yellow",attribute:'bold'}));
