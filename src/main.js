@@ -1,41 +1,27 @@
 "use strict";
 
-var TextQuoter = require('./text-quoter.js');
+var TextQuoter = require('./text-quoter');
+var TextUtil = require('./text-util');
+var TextGraph = require('./graph');
 
 var defaultOptions = {
 	hiddenPaths:[],
 	useColor:true,
-	truncateThreshold:128,
-	verbose:true,
 	maxSourceLines:6,
 	parent:null,
+	showSource:true,
+	showTrace:false,
+	showFullPath:false,
+	maxPathLength:64,
 };
 
-function truncate(str, maxlen) {
-	if(0<maxlen && maxlen < str.length) {
-		var trlen = str.length - maxlen + 3;
-		return "..." + str.slice(trlen);
-	}
-	return str;
-}
-
-var __space__ = "                                                                       ";
-function makeIndent(indent) {
-	var ret = '';
-	while(__space__.length<indent) {
-		ret += __space__;
-		indent -= __space__.length;
-	}
-	return ret + __space__.slice(0,indent);
-}
-
-var makeDisplayPath = function(node,showPathName,truncateThreshold) {
-	if(showPathName) {
-		return truncate(node.path,truncateThreshold) + node.rule;
-	} else {
-		return makeIndent(node.path.replace(/[^\/]/g,'').length).replace(/ /g,'-') + " " + node.rule;
-	}
-};
+var VLINE_STYLES = [
+	{color:'yellow'},
+	{color:'magenta'},
+	{color:'blue'},
+	{color:'white'},
+	{color:'green'},
+];
 
 var Tracer = function(source, opt) {
 
@@ -57,7 +43,7 @@ var Tracer = function(source, opt) {
 	}
 
 	this.headStringMap = {
-		"rule.enter":this.setTextStyle("- ",{color:'cyan'}),
+		"rule.enter":this.setTextStyle("+ ",{color:'cyan'}),
 		"rule.match":this.setTextStyle("o ",{color:'green'}),
 		"rule.fail":this.setTextStyle("x ",{color:'red'}),
 		"error":this.setTextStyle("! ",{color:'red'})
@@ -83,21 +69,15 @@ Tracer.prototype.init = function() {
 		fails:[],
 		rule:'',
 		location:{
-			start:{
-				offset:0,
-				line:0,
-				column:0
-			},
-			end:{
-				offset:0,
-				line:0,
-				column:0
-			}
+			start:{offset:0,line:0,column:0},
+			end:{offset:0,line:0,column:0}
 		}
 	};
 	this.currentNode = this.root;
 	this.maxFailPos = 0;
 	this.maxFails = [];
+	this.currentLevel = 0;
+	this.numNodes = 0;
 };
 
 Tracer.prototype.setTextStyle = function(str,style) {
@@ -139,11 +119,9 @@ Tracer.prototype.isHidden = function(node) {
 };
 
 Tracer.prototype.trace = function(evt) {
-
 	if(this.parent&&this.parent.trace) {
 		this.parent.trace(evt);
 	}
-
 	switch(evt.type){
 		case "rule.enter":
 		this.onEnter(evt);
@@ -155,6 +133,26 @@ Tracer.prototype.trace = function(evt) {
 		this.onFail(evt);
 		break;
 	}
+};
+
+Tracer.prototype.printNode = function(level,node) {
+
+	if(this.isHidden(node)) return;
+
+	var lines = this.buildNodeText(node,this.options.showSource," ");
+	var style = VLINE_STYLES[level%VLINE_STYLES.length];
+	var tailIndent = TextUtil.makeIndent(level+1);
+	var headIndent = TextUtil.makeIndent(level) + this.typeStringMap[node.type] + " " ;
+
+	lines = lines.map(function(e,i){
+		if(i==0) {
+			return headIndent + e;
+		} else {
+			return tailIndent + e;
+		}
+	});
+	
+	console.log(lines.join('\n'));
 
 };
 
@@ -169,9 +167,16 @@ Tracer.prototype.onEnter = function(evt) {
 		rule:evt.rule,
 		location:evt.location,
 		lastChildType: null,
+		number:++this.numNodes,
 	};
+
 	this.currentNode = node;
 
+	if(this.options.showTrace) {
+		this.printNode(this.currentLevel,this.currentNode);		
+	}
+
+	this.currentLevel++;
 };
 
 var _isParentRule = function(parent,child) {
@@ -206,29 +211,55 @@ Tracer.prototype.onFail = function(evt) {
 	this.currentNode.parent.fails.push(this.currentNode);
 	this.currentNode.parent.lastChildType = "fail";
 
+	this.currentLevel--;
+
+	if(this.options.showTrace) {
+		this.printNode(this.currentLevel,this.currentNode);
+	}
+
 	this.currentNode = this.currentNode.parent;
 
 };
 
 Tracer.prototype.onMatch = function(evt) {
+
 	this.currentNode.type = evt.type;
 	this.currentNode.location = evt.location;
 	this.currentNode.parent.matches.push(this.currentNode);
 	this.currentNode.parent.lastChildType = "match";
 
+	this.currentLevel--;
+
+	if(this.options.showTrace) {
+		this.printNode(this.currentLevel,this.currentNode);
+	}
+
 	this.currentNode = this.currentNode.parent;
 };
 
-Tracer.prototype.buildNodeText = function(node,source) {
+Tracer.prototype.buildNodeText = function(node,withSource,quoteString) {
 	var buf = [];
-	buf.push( 
-		this.setTextStyle("(" + node.location.start.line + ":" + node.location.start.column + "-" + node.location.end.line + ":" + node.location.end.column+")",{attribute:'thin'}) 
-		+ " " + 
-		this.setTextStyle(node.rule,{color:"yellow",attribute:'bold'})
-	);
+	var location = [ 
+		node.location.start.line, ":", node.location.start.column, 
+		"-", 
+		node.location.end.line, ":", node.location.end.column, 
+		].join('');
 
-	if(source) {
-		var lines = this.getSourceLines("",node.location,this.options.maxSourceLines);
+	var title = [
+		this.setTextStyle("#" + node.number,{attribute:'thin'}), 
+		this.setTextStyle(location,{attribute:'thin'})
+		];
+
+	if(this.options.showFullPath) {
+		title.push(this.setTextStyle(TextUtil.truncate(node.path,this.options.maxPathLength) + node.rule,{color:"yellow",attribute:'bold'}));
+	} else {
+		title.push(this.setTextStyle(node.rule,{color:"yellow",attribute:'bold'}));
+	}
+
+	buf.push(title.join(' '));
+
+	if(withSource) {
+		var lines = this.getSourceLines(quoteString||'',node.location,this.options.maxSourceLines);
 		for(var i=0;i<lines.length;i++) {
 			buf.push(lines[i]);
 		}
@@ -236,10 +267,11 @@ Tracer.prototype.buildNodeText = function(node,source) {
 	return buf;
 };
 
-Tracer.prototype.getParseTree = function(failPathOnly,node) {
+Tracer.prototype.getParseTree = function(type,node) {
 
 	node = node || this.root;
-	var children = [], i, c;
+	var children = [];
+	var self = this;
 
 	var ret = {
 		parent:null,
@@ -248,75 +280,42 @@ Tracer.prototype.getParseTree = function(failPathOnly,node) {
 		rule:node.rule,
 		children:children,
 		location:node.location,
+		number:node.number,
 	};
 
-	for(i=0;i<node.matches.length;i++) {
-		c = this.getParseTree(failPathOnly,node.matches[i]);
-		if(c) {
-			c.parent = ret;
-			children.push(c);
+	function buildChilden(nodes) {
+		var c,e,i;
+		for(i=0;i<nodes.length;i++) {
+			e = nodes[i];
+			if(type != "fail" && self.isHidden(e)) continue;
+			c = self.getParseTree(type,e);
+			if(c) {
+				c.parent = ret;
+				children.push(c);
+			}
 		}
 	}
 
-	for(i=0;i<node.fails.length;i++) {
-		c = this.getParseTree(failPathOnly,node.fails[i]);
-		if(c) {
-			c.parent = ret;
-			children.push(c);
-		}
-	}
+	buildChilden(node.matches);
+	buildChilden(node.fails);
 
-	if(children.length == 0 && failPathOnly && this.maxFails.indexOf(node)<0) {
+	if(children.length == 0 && type == "fail" && this.maxFails.indexOf(node)<0) {
 		return null;
 	}
-
-	var self = this;
-	ret.children = ret.children.filter(function(e){
-		return !self.isHidden(e);	
-	});
 
 	return ret;
 
 };
 
-var treeToLinear = function(tree) {
-	var buf = [];
-	var i,j;
-	for(i=0;i<tree.children.length;i++) {
-		var subs = treeToLinear(tree.children[i]);
-		for(j=0;j<subs.length;j++) {
-			buf.push(subs[j]);
-		}
-	}	
-	buf.push(tree);
-	return buf;
-};
-
-Tracer.prototype.dumpBacktraceTree = function() {
-
-	var lines = [];
-	var tree = this.getParseTree(true);
-	var list = treeToLinear(tree).reverse();
-	list.shift();// remove the root
+Tracer.prototype.buildNodeGraph = function(list) {
 
 	var nodes = [];
-	var TextGraph = require('./graph.js');
-	var gd = new TextGraph({useColor:this.options.useColor});
-
-	var styles = [
-		{color:'yellow'},
-		{color:'cyan'},
-		{color:'magenta'},
-		{color:'blue'},
-		{color:'white'},
-		{color:'red'},
-		{color:'green'},
-	];
+	var lines = [];
+	var g = new TextGraph({useColor:this.options.useColor});
 
 	while(0<list.length) {
 
 		var node = list.pop();
-
 		var parentIndexes = [];
 
 		for(var i=0;i<nodes.length;i++) {
@@ -329,23 +328,55 @@ Tracer.prototype.dumpBacktraceTree = function() {
 
 		if(parentIndexes.length==0) {
 			column = nodes.length;
-			node.style = styles[column%styles.length];
+			node.style = VLINE_STYLES[column%VLINE_STYLES.length];
 			nodes.push(node);
-			lines = lines.concat( gd.drawState(nodes,column,this.buildNodeText(node,this.options.verbose)) );
+			lines = lines.concat( g.drawState(nodes,column,this.buildNodeText(node,this.options.showSource)) );
 		} else {
 			column = parentIndexes.shift();
-			lines = lines.concat(gd.drawMergeEdges(parentIndexes,column,nodes));
+			lines = lines.concat(g.drawMergeEdges(parentIndexes,column,nodes));
 			node.style = nodes[column].style;
 			nodes[column] = node;
 			nodes = nodes.filter(function(e,i) {return (parentIndexes.indexOf(i)<0);});
-			lines = lines.concat( gd.drawState(nodes, column, this.buildNodeText(node,this.options.verbose)) );			
+			lines = lines.concat( g.drawState(nodes,column,this.buildNodeText(node,this.options.showSource),list.length==0) );			
 		}
 
-		if(!this.options.verbose&&0<list.length) {
-			lines = lines.concat( gd.drawState(nodes) );
+		if(!this.options.showSource&&0<list.length) {
+			lines = lines.concat( g.drawState(nodes) );
 		}
 	}
 
+	return lines;
+
+};
+
+var _treeToList = function(tree) {
+	var buf = [];
+	var i,j;
+	buf.push(tree);
+	for(i=0;i<tree.children.length;i++) {
+		var subs = _treeToList(tree.children[i]);
+		for(j=0;j<subs.length;j++) {
+			buf.push(subs[j]);
+		}
+	}	
+	return buf;
+};
+
+Tracer.prototype.getParseTreeString = function() {
+	var lines = [];
+	var tree = this.getParseTree();
+	var list = _treeToList(tree);
+	list.shift();
+	lines = this.buildNodeGraph(list);
+	return lines.join('\n');
+};
+
+Tracer.prototype.getBacktraceString = function() {
+	var lines = [];
+	var tree = this.getParseTree("fail");
+	var list = _treeToList(tree);
+	list.shift();
+	lines = this.buildNodeGraph(list);
 	return lines.join('\n');
 };
 

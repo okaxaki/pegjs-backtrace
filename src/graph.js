@@ -1,6 +1,6 @@
 "use strict"
 
-var _setTextStyle = require('./text-style.js').setTextStyle;
+var TextUtil = require('./text-util');
 
 var defaultOptions = {
 	useColor:true,
@@ -20,28 +20,28 @@ var TextGraph = function(opt){
 
 TextGraph.prototype.setTextStyle = function(str,style,start,end) {
 	if(this.options.useColor) {
-		return _setTextStyle(str,style,start,end);
+		return TextUtil.setTextStyle(str,style,start,end);
 	} else {
 		return str;
 	}
-}
+};
 
-TextGraph.prototype.drawState = function(nodes,column,contents) {
+TextGraph.prototype.drawState = function(nodes,column,contents,isLastState) {
 	var buf = [];
 	contents = contents || [];
 	if(0<contents.length) {
-		buf.push(this.drawStateLine(nodes,column) + contents.shift());
+		buf.push(this.drawStateLine(nodes,column,isLastState) + contents.shift());
 		while(0<contents.length) {
-			buf.push(this.drawStateLine(nodes) + contents.shift());
+			buf.push(this.drawStateLine(nodes,undefined,isLastState) + contents.shift());
 		}
 	} else {
-		buf.push(this.drawStateLine(nodes,column));
+		buf.push(this.drawStateLine(nodes,column,isLastState));
 	}
 	return buf;
 };
 
-TextGraph.prototype.drawStateLine = function(nodes,column) {
-	var line = '', i;
+TextGraph.prototype.drawStateLine = function(nodes,column,isLastState) {
+	var line = '', i, quote = isLastState?"  ":"| ";
 	for(i=0;i<nodes.length;i++) {
 		if(column===i) {
 			if(nodes[i].type=="rule.fail") {
@@ -52,7 +52,7 @@ TextGraph.prototype.drawStateLine = function(nodes,column) {
 				line += this.setTextStyle("? ",{color:'yellow'});
 			}
 		} else {
-			line += this.setTextStyle("| ",nodes[i].style);
+			line += this.setTextStyle(quote,nodes[i].style);
 		}
 	}
 	return line;

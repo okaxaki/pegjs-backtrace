@@ -1,6 +1,6 @@
 "use strict";
 
-var _setTextStyle = require('./text-style.js').setTextStyle;
+var TextUtil = require('./text-util');
 
 var defaultOptions = {
 	useColor:true,
@@ -15,39 +15,27 @@ var _applyDefault = function(opt,def) {
 	return ret;
 };
 
-var __space__ = "                                                                       ";
-
-var _makeIndent = function(indent) {
-	var ret = '';
-	while(__space__.length<indent) {
-		ret += __space__;
-		indent -= __space__.length;
-	}
-	return ret + __space__.slice(0,indent);
-};
-
 var TextQuoter = function(source,opt) {
 	this.options = _applyDefault(opt,defaultOptions);
 	if(source==null) {
 		throw new Error("Missing source argument.");
 	}
 	if(/[\r\v\f]/.test(source)) {
-		throw new Error("Found an unsupported new line code. The new line code must be '\\n'.");
+		throw new Error("Found an unsupported new line code. The new line code must be '\n'.");
 	}
-	this.sourceLines = source.split('\n');
+	this.sourceLines = source.replace(/\t/g,' ').split('\n');
 };
 
 TextQuoter.prototype.setTextStyle = function(str,style,start,end) {
 	if(this.options.useColor) {
-		return _setTextStyle(str,style,start,end);
+		return TextUtil.setTextStyle(str,style,start,end);
 	} else {
 		return str;
 	}
-}
+};
 
-TextQuoter.prototype.makeOverline = function(indent,length,ch) {
-	return _makeIndent(indent) + this.setTextStyle(
-		_makeIndent(length).replace(/ /g,ch),this.options.highlightStyle);
+TextQuoter.prototype.drawHLine = function(start,length,ch) {
+	return this.setTextStyle(TextUtil.makeLine(start,length,ch),this.options.highlightStyle);q
 };
 
 TextQuoter.prototype.getQuotedLines = function(quoteString,startLine,startColumn,endLine,endColumn,maxLines) {
@@ -83,10 +71,10 @@ TextQuoter.prototype.getQuotedLines = function(quoteString,startLine,startColumn
 	}
 
 	if(startLine==endLine&&startColumn<=endColumn) {
-		lines.push(this.makeOverline(startColumn, (endColumn-startColumn)||1, '^'));
+		lines.push(this.drawHLine(startColumn, (endColumn-startColumn)||1, '^'));
 	} else if(startLine<endLine) {
-		lines.unshift(this.makeOverline(startColumn,(lines[0].length-startColumn),'>'));
-		lines.push(this.makeOverline(0,endColumn,'<'));
+		lines.unshift(this.drawHLine(startColumn,(lines[0].length-startColumn),'_'));
+		lines.push(this.drawHLine(0,endColumn,'^'));
 	}
 	var self = this;
 	lines = lines.map(function(e){return quoteString + e;});
