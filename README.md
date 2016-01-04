@@ -22,7 +22,7 @@ plus = "+"
 mult = "*"
 ```
 
-If you give the `2*(3/4)` which the grammer does not recognize, pegjs-backtrace shows backtrace tree from the maximum failure position(s) to the start rule as follows.
+If you give the `2*(3/4)` which the grammer does not recognize, pegjs-backtrace shows backtrace tree from the maximum failure positions to the start rule as follows.
 
 <img src="img/backtrace.png" width="400">
 
@@ -62,7 +62,7 @@ When creating pegjs-backtrace instance, you can provide some options as follows.
 var Tracer = require('pegjs-backtrace');
 var tracer = new Tracer(text,{
   parent:null,
-  hiddenPaths:['primary'],
+  hiddenPaths:[],
   useColor:true,
   showTrace:false,
   maxSourceLines:6,
