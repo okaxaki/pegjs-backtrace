@@ -353,13 +353,15 @@ Tracer.prototype.buildNodeGraph = function(list) {
 var _treeToList = function(tree) {
 	var buf = [];
 	var i,j;
-	buf.push(tree);
-	for(i=0;i<tree.children.length;i++) {
-		var subs = _treeToList(tree.children[i]);
-		for(j=0;j<subs.length;j++) {
-			buf.push(subs[j]);
-		}
-	}	
+	if(tree) {
+		buf.push(tree);
+		for(i=0;i<tree.children.length;i++) {
+			var subs = _treeToList(tree.children[i]);
+			for(j=0;j<subs.length;j++) {
+				buf.push(subs[j]);
+			}
+		}	
+	}
 	return buf;
 };
 
@@ -367,6 +369,9 @@ Tracer.prototype.getParseTreeString = function() {
 	var lines = [];
 	var tree = this.getParseTree();
 	var list = _treeToList(tree);
+	if(list.length==0) {
+		return "No trace found. Make sure you use `pegjs --trace` to build your parser javascript.";
+	}
 	list.shift();
 	lines = this.buildNodeGraph(list);
 	return lines.join('\n');
@@ -376,6 +381,10 @@ Tracer.prototype.getBacktraceString = function() {
 	var lines = [];
 	var tree = this.getParseTree("fail");
 	var list = _treeToList(tree);
+	if(list.length==0) {
+		return "No backtrace found. Make sure you use `pegjs --trace` to build your parser javascript.\n" +
+		"Or, the failure might occur in the start node.";
+	}
 	list.shift();
 	lines = this.buildNodeGraph(list);
 	return lines.join('\n');
