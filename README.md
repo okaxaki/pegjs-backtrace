@@ -32,7 +32,7 @@ This module is still experimental and not registered to the npm repository.
 Use npm install from git URL.
 
 ```
-npm install https://github.com/okaxaki/pegjs-backtrace
+npm install pegjs-backtrace
 ```
 
 # Usage
