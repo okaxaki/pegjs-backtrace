@@ -1,4 +1,4 @@
-# pegjs-backtrace
+# pegjs-backtrace [![npm version](https://badge.fury.io/js/pegjs-backtrace.svg)](https://badge.fury.io/js/pegjs-backtrace)
 A tracer module for [PEG.js](http://pegjs.org/) which generates a visual backtrace tree when the parser fails.
 
 This module also supports normal tracing output. See [showTrace](#showTrace) option for detail.
