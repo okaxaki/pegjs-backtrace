@@ -1,7 +1,11 @@
 {
   "name": "pegjs-backtrace",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A debug backtrace module for PEG.js.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/okaxaki/pegjs-backtrace"
+  },
   "homepage": "https://github.com/okaxaki/pegjs-backtrace",
   "main": "src/main.js",
   "scripts": {},
