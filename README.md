@@ -28,9 +28,6 @@ If you give the `2*(3/4)` which the grammer does not recognize, pegjs-backtrace 
 
 # Install
 
-This module is still experimental and not registered to the npm repository. 
-Use npm install from git URL.
-
 ```
 npm install pegjs-backtrace
 ```
