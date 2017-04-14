@@ -115,7 +115,7 @@ The type of the pattern must be `string` or `RegExp`. Even the pattern is `strin
 The `/` character can be used to represent the hierarchcal path of grammer rules. If the pattern is string like `"FOO"`, it is treated as the regular expression `/(^|\/)FOO(\/|$)/`.
 
 # Limitation
-The cursor symbol `^` may points the wrong position if the prefix of source line is contains East Asian full-width Characters.
+The cursor symbol `^` may points the wrong position if the prefix of the source line contains East Asian full-width Characters.
 
 The generating tree is based on the observable trace events from the pegjs parser. Any local failure inside a grammer rule is ignored. For example, if parser fails while
 reading `"+"` character in the following `additive` rule, we can observe the event that `additive` fails but cannot get any information of `"+"` fails.
