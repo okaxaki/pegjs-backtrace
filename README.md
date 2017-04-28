@@ -6,7 +6,7 @@ A tracer module for [PEG.js](http://pegjs.org/) which generates a visual backtra
 This module also supports normal tracing output. See [showTrace](#showTrace) option for detail.
 
 # Example
-The following example grammer recognizes arithmetic expressions like `2*(3+4)`.
+The following example grammar recognizes arithmetic expressions like `2*(3+4)`.
 
 ```
 start = additive
@@ -24,7 +24,7 @@ plus = "+"
 mult = "*"
 ```
 
-If you give the `2*(3/4)` which the grammer does not recognize, pegjs-backtrace shows backtrace tree from the maximum failure positions to the start rule as follows.
+If you give the `2*(3/4)` which the grammar does not recognize, pegjs-backtrace shows backtrace tree from the maximum failure positions to the start rule as follows.
 
 <img src="img/backtrace.png" width="400">
 
@@ -112,12 +112,12 @@ var tracer = new Tracer(text,{
 });
 ```
 The type of the pattern must be `string` or `RegExp`. Even the pattern is `string`, it may also contain RegExp meta characters.
-The `/` character can be used to represent the hierarchcal path of grammer rules. If the pattern is string like `"FOO"`, it is treated as the regular expression `/(^|\/)FOO(\/|$)/`.
+The `/` character can be used to represent the hierarchcal path of grammar rules. If the pattern is string like `"FOO"`, it is treated as the regular expression `/(^|\/)FOO(\/|$)/`.
 
 # Limitation
 The cursor symbol `^` may points the wrong position if the prefix of the source line contains East Asian full-width Characters.
 
-The generating tree is based on the observable trace events from the pegjs parser. Any local failure inside a grammer rule is ignored. For example, if parser fails while
+The generating tree is based on the observable trace events from the pegjs parser. Any local failure inside a grammar rule is ignored. For example, if parser fails while
 reading `"+"` character in the following `additive` rule, we can observe the event that `additive` fails but cannot get any information of `"+"` fails.
 ```
 additive = multiplicative "+" additive / multiplicative
