@@ -20,6 +20,7 @@ var TextQuoter = function(source,opt) {
 	if(source==null) {
 		throw new Error("Missing source argument.");
 	}
+	source = source.replace(/\r\n/g,'\n');
 	if(/[\r\v\f]/.test(source)) {
 		throw new Error("Found an unsupported new line code. The new line code must be '\n'.");
 	}
