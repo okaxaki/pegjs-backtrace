@@ -125,6 +125,7 @@ Tracer.prototype.isHidden = function(node) {
       return true;
     }
   }
+
   return false;
 };
 
@@ -300,6 +301,7 @@ Tracer.prototype.buildNodeText = function(node, withSource, quoteString) {
 
 Tracer.prototype.getParseTree = function(type, node) {
   node = node || this.root;
+
   var children = [];
   var self = this;
 
@@ -315,10 +317,14 @@ Tracer.prototype.getParseTree = function(type, node) {
 
   function buildChilden(nodes) {
     var c, e, i;
+
     for (i = 0; i < nodes.length; i++) {
       e = nodes[i];
+
       if (type != "fail" && self.isHidden(e)) continue;
+
       c = self.getParseTree(type, e);
+
       if (c) {
         c.parent = ret;
         children.push(c);
@@ -373,9 +379,11 @@ Tracer.prototype.buildNodeGraph = function(list) {
       lines = lines.concat(g.drawMergeEdges(parentIndexes, column, nodes));
       node.style = nodes[column].style;
       nodes[column] = node;
+
       nodes = nodes.filter(function(e, i) {
         return parentIndexes.indexOf(i) < 0;
       });
+
       lines = lines.concat(
         g.drawState(
           nodes,
