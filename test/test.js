@@ -210,7 +210,8 @@ function peg$parse(input, options) {
 
   var peg$f0 = function(left, operator, right) { return { left, operator, right } };
   var peg$f1 = function(m) { return m };
-  var peg$f2 = function(m) { return { group: m } };
+  var peg$f2 = function(integer) { return { integer } };
+  var peg$f3 = function(group) { return { group } };
 
   var peg$currPos = 0;
   var peg$savedPos = 0;
@@ -991,7 +992,7 @@ function peg$parse(input, options) {
     if (s2 !== peg$FAILED) {
       s3 = peg$parsews();
       peg$savedPos = s0;
-      s0 = peg$f1(s2);
+      s0 = peg$f2(s2);
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
@@ -1009,7 +1010,7 @@ function peg$parse(input, options) {
           if (s6 !== peg$FAILED) {
             s7 = peg$parsews();
             peg$savedPos = s0;
-            s0 = peg$f2(s4);
+            s0 = peg$f3(s4);
           } else {
             peg$currPos = s0;
             s0 = peg$FAILED;

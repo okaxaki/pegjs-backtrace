@@ -6,13 +6,32 @@ let Tracer = require("../src/main.js");
 let success = process.argv[2] || "1 / 1";
 let failure = process.argv[3] || "oh no";
 
-// on: ["rule.enter", "rule.match", "rule.fail", "error"]
 let tracerOptions = [
+  // {
+  //   showTrace: true,
+  //   hiddenPaths: ["*/primary/*", "*/ws/*"],
+  //   showFullPath: true,
+  //   showSource: true
+  // },
   {
-    // showTrace: true,
-    hiddenPaths: ["*/primary/*", "*/ws/*"],
+    hiddenPaths: ["*/ws/*"],
     showFullPath: true,
-    showSource: true
+    showSource: true,
+    matchesNode: (node, state) => {
+      if (state === "fail") {
+        if (node.type  === "rule.fail") {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        if (node.type == "rule.match") {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
   }
 ]
 
@@ -27,8 +46,6 @@ tracerOptions.forEach((options) => {
   console.log(`\n   SUCCESS FOR ${success}\n\noptions:${json(options)}`)
   console.log("\n== getParseTreeString() ==\n")
   console.log(tracerSuccess.getParseTreeString());
-  console.log("\n== getBacktraceString() ==\n")
-  console.log(tracerSuccess.getBacktraceString())
   console.log("\n== result ==\n")
   console.log(result)
 

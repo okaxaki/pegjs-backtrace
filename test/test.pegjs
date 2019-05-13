@@ -30,8 +30,8 @@ divisive =
   { return m }
 
 primary =
-  ws m:integer ws
-  { return m }
+  ws integer:integer ws
+  { return { integer } }
   /
-  ws left_parens ws m:additive ws right_parens ws
-  { return { group: m } }
+  ws left_parens ws group:additive ws right_parens ws
+  { return { group } }

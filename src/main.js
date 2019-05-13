@@ -13,7 +13,7 @@ var defaultOptions = {
   showTrace: false,
   showFullPath: false,
   maxPathLength: 64,
-  on: ["rule.enter", "rule.match", "rule.fail", "error"]
+  matchesNode: function(_node, _state) { true }
 };
 
 var VLINE_STYLES = [
@@ -347,7 +347,7 @@ Tracer.prototype.getParseTree = function(type, node) {
   return ret;
 };
 
-Tracer.prototype.buildNodeGraph = function(list) {
+Tracer.prototype.buildNodeGraph = function(list, state) {
   var nodes = [];
   var lines = [];
   var g = new TextGraph({ useColor: this.options.useColor });
@@ -355,7 +355,7 @@ Tracer.prototype.buildNodeGraph = function(list) {
   while (0 < list.length) {
     var node = list.pop();
 
-    if (!this.options.on.includes(node.type)) continue;
+    if (!this.options.matchesNode(node, state)) continue;
 
     var parentIndexes = [];
 
@@ -434,7 +434,7 @@ Tracer.prototype.getParseTreeString = function() {
   }
 
   list.shift();
-  lines = this.buildNodeGraph(list);
+  lines = this.buildNodeGraph(list, "success");
 
   return lines.join("\n");
 };
@@ -452,7 +452,7 @@ Tracer.prototype.getBacktraceString = function() {
   }
 
   list.shift();
-  lines = this.buildNodeGraph(list);
+  lines = this.buildNodeGraph(list, "fail");
 
   return lines.join("\n");
 };
