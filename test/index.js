@@ -3,20 +3,23 @@
 var parser = require("./test");
 var Tracer = require("../src/main.js");
 
-var source = "2+(3/4)";
+var source = process.argv[2] || "2 + 10 / (3 / 4)";
 
 var tracer = new Tracer(source, {
   useColor: true,
   showTrace: true,
   showSource: true,
   showFullPath: true,
-  hiddenPaths: ["primary/.*"]
+  hiddenPaths: ["primary/.*"],
+  // on: ["rule.enter", "rule.match", "rule.fail", "error"]
 });
 
 try {
-  parser.parse(source, { tracer: tracer });
-  console.log(tracer.getParseTreeString() + "\n");
+  let result = parser.parse(source, { tracer: tracer });
+  console.log(tracer.getParseTreeString());
+  console.log(tracer.getBacktraceString())
+  console.log(result)
 } catch (e) {
-  console.log("\n" + e.message + "\n");
-  console.log(tracer.getBacktraceString() + "\n");
+  console.log(e.message);
+  console.log(tracer.getBacktraceString());
 }

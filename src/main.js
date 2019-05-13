@@ -12,7 +12,8 @@ var defaultOptions = {
   showSource: true,
   showTrace: false,
   showFullPath: false,
-  maxPathLength: 64
+  maxPathLength: 64,
+  on: ["rule.enter", "rule.match", "rule.fail", "error"]
 };
 
 var VLINE_STYLES = [
@@ -353,6 +354,9 @@ Tracer.prototype.buildNodeGraph = function(list) {
 
   while (0 < list.length) {
     var node = list.pop();
+
+    if (!this.options.on.includes(node.type)) continue;
+
     var parentIndexes = [];
 
     for (var i = 0; i < nodes.length; i++) {
@@ -367,6 +371,7 @@ Tracer.prototype.buildNodeGraph = function(list) {
       column = nodes.length;
       node.style = VLINE_STYLES[column % VLINE_STYLES.length];
       nodes.push(node);
+
       lines = lines.concat(
         g.drawState(
           nodes,

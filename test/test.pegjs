@@ -1,13 +1,37 @@
 start = additive
 
+ws = (" ")*
 plus = "+"
-
 mult = "*"
+div = "/"
+left_parens = "("
+right_parens = ")"
+integer = $([1-9] [0-9]*)
 
-additive = multiplicative plus additive / multiplicative
+additive =
+  ws left:multiplicative ws operator:plus ws right:additive
+  { return { left, operator, right } }
+  /
+  ws m:multiplicative ws
+  { return m }
 
-multiplicative = primary mult multiplicative / primary
+multiplicative =
+  ws left:divisive ws operator:mult ws right:multiplicative
+  { return { left, operator, right } }
+  /
+  ws m:divisive ws
+  { return m }
 
-primary = integer / "(" additive ")"
+divisive =
+  ws left:primary ws operator:div ws right:divisive ws
+  { return { left, operator, right } }
+  /
+  ws m:primary ws
+  { return m }
 
-integer = digits:[0-9]+
+primary =
+  ws m:integer ws
+  { return m }
+  /
+  ws left_parens ws m:additive ws right_parens ws
+  { return { group: m } }
