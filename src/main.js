@@ -13,7 +13,7 @@ var defaultOptions = {
   showTrace: false,
   showFullPath: false,
   maxPathLength: 64,
-  matchesNode: function(_node, _state) { true }
+  matchesNode: function(_node, _state) { return true; }
 };
 
 var VLINE_STYLES = [
