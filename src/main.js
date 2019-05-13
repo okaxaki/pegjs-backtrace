@@ -25,6 +25,7 @@ var VLINE_STYLES = [
 
 var Tracer = function(source, opt) {
   this.options = {};
+
   for (var key in defaultOptions) {
     this.options[key] =
       opt && opt[key] !== undefined ? opt[key] : defaultOptions[key];
@@ -33,8 +34,10 @@ var Tracer = function(source, opt) {
   this.parent = this.options.parent;
   this.quoter = new TextQuoter(source, { useColor: this.options.useColor });
   this.hiddenPatterns = [];
+
   for (var i = 0; i < this.options.hiddenPaths.length; i++) {
     var pattern = this.options.hiddenPaths[i];
+
     if (pattern instanceof RegExp) {
       this.hiddenPatterns[i] = pattern;
     } else {
@@ -72,6 +75,7 @@ Tracer.prototype.init = function() {
       end: { offset: 0, line: 0, column: 0 }
     }
   };
+
   this.currentNode = this.root;
   this.maxFailPos = 0;
   this.maxFails = [];
@@ -100,6 +104,7 @@ var _convertToZeroBasedLocation = function(location) {
 
 Tracer.prototype.getSourceLines = function(quoteString, location, maxLines) {
   var location = _convertToZeroBasedLocation(location);
+
   return this.quoter.getQuotedLines(
     quoteString,
     location.start.line,
@@ -112,8 +117,10 @@ Tracer.prototype.getSourceLines = function(quoteString, location, maxLines) {
 
 Tracer.prototype.isHidden = function(node) {
   var path = node.path + node.rule;
+
   for (var i = 0; i < this.hiddenPatterns.length; i++) {
     var pattern = this.hiddenPatterns[i];
+
     if (pattern.test(path)) {
       return true;
     }
@@ -125,6 +132,7 @@ Tracer.prototype.trace = function(evt) {
   if (this.parent && this.parent.trace) {
     this.parent.trace(evt);
   }
+
   switch (evt.type) {
     case "rule.enter":
       this.onEnter(evt);
@@ -194,6 +202,7 @@ Tracer.prototype.onFail = function(evt) {
     this.maxFails = [this.currentNode];
   } else if (this.maxFailPos == evt.location.start.offset) {
     var found = false;
+
     for (var i = this.maxFails.length - 1; 0 <= i; i--) {
       var f = this.maxFails[i];
       if (
@@ -204,6 +213,7 @@ Tracer.prototype.onFail = function(evt) {
         break;
       }
     }
+
     if (!found) {
       this.maxFails.push(this.currentNode);
     }
@@ -240,6 +250,7 @@ Tracer.prototype.onMatch = function(evt) {
 
 Tracer.prototype.buildNodeText = function(node, withSource, quoteString) {
   var buf = [];
+
   var location = [
     node.location.start.line,
     ":",
@@ -251,9 +262,11 @@ Tracer.prototype.buildNodeText = function(node, withSource, quoteString) {
   ].join("");
 
   var title = [];
+
   if (this.options.showTrace) {
     title.push(this.setTextStyle("#" + node.number, { attribute: "thin" }));
   }
+
   title.push(this.setTextStyle(location, { attribute: "thin" }));
 
   if (this.options.showFullPath) {
@@ -281,6 +294,7 @@ Tracer.prototype.buildNodeText = function(node, withSource, quoteString) {
       buf.push(lines[i]);
     }
   }
+
   return buf;
 };
 
@@ -383,6 +397,7 @@ Tracer.prototype.buildNodeGraph = function(list) {
 var _treeToList = function(tree) {
   var buf = [];
   var i, j;
+
   if (tree) {
     buf.push(tree);
     for (i = 0; i < tree.children.length; i++) {
@@ -392,6 +407,7 @@ var _treeToList = function(tree) {
       }
     }
   }
+
   return buf;
 };
 
@@ -399,11 +415,14 @@ Tracer.prototype.getParseTreeString = function() {
   var lines = [];
   var tree = this.getParseTree();
   var list = _treeToList(tree);
+
   if (list.length == 0) {
     return "No trace found. Make sure you use `pegjs --trace` to build your parser javascript.";
   }
+
   list.shift();
   lines = this.buildNodeGraph(list);
+
   return lines.join("\n");
 };
 
@@ -411,14 +430,17 @@ Tracer.prototype.getBacktraceString = function() {
   var lines = [];
   var tree = this.getParseTree("fail");
   var list = _treeToList(tree);
+
   if (list.length == 0) {
     return (
       "No backtrace found. Make sure you use `pegjs --trace` to build your parser javascript.\n" +
       "Or, the failure might occur in the start node."
     );
   }
+
   list.shift();
   lines = this.buildNodeGraph(list);
+
   return lines.join("\n");
 };
 

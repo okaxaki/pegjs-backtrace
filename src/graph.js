@@ -8,9 +8,11 @@ var defaultOptions = {
 
 var _applyDefault = function(opt, def) {
   var ret = {};
+
   for (var key in def) {
     ret[key] = opt && opt[key] !== undefined ? opt[key] : def[key];
   }
+
   return ret;
 };
 
@@ -28,9 +30,12 @@ TextGraph.prototype.setTextStyle = function(str, style, start, end) {
 
 TextGraph.prototype.drawState = function(nodes, column, contents, isLastState) {
   var buf = [];
+
   contents = contents || [];
+
   if (0 < contents.length) {
     buf.push(this.drawStateLine(nodes, column, isLastState) + contents.shift());
+
     while (0 < contents.length) {
       buf.push(
         this.drawStateLine(nodes, undefined, isLastState) + contents.shift()
@@ -46,6 +51,7 @@ TextGraph.prototype.drawStateLine = function(nodes, column, isLastState) {
   var line = "",
     i,
     quote = isLastState ? "  " : "| ";
+
   for (i = 0; i < nodes.length; i++) {
     if (column === i) {
       if (nodes[i].type == "rule.fail") {
@@ -59,12 +65,14 @@ TextGraph.prototype.drawStateLine = function(nodes, column, isLastState) {
       line += this.setTextStyle(quote, nodes[i].style);
     }
   }
+
   return line;
 };
 
 TextGraph.prototype.drawMergeEdge = function(fromIndex, toIndex, nodes) {
   var lines = ["", ""],
     i;
+
   for (i = 0; i < nodes.length; i++) {
     if (i <= toIndex) {
       lines[0] += this.setTextStyle("| ", nodes[i].style);
@@ -98,21 +106,27 @@ TextGraph.prototype.drawMergeEdge = function(fromIndex, toIndex, nodes) {
       lines[1] += "  ";
     }
   }
+
   return lines;
 };
 
 TextGraph.prototype.drawMergeEdges = function(fromIndexes, toIndex, nodes) {
   nodes = nodes.slice(0);
   fromIndexes = fromIndexes.slice(0);
+
   fromIndexes.sort(function(a, b) {
     return a - b;
   });
+
   var lines = [],
     i;
+
   while (0 < fromIndexes.length) {
     var fromIndex = fromIndexes.shift();
+
     lines = lines.concat(this.drawMergeEdge(fromIndex, toIndex, nodes));
     nodes.splice(fromIndex, 1);
+
     for (var i = 0; i < fromIndexes.length; i++) {
       if (fromIndex < fromIndexes[i]) fromIndexes[i]--;
     }

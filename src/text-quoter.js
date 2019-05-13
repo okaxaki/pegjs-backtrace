@@ -62,20 +62,24 @@ TextQuoter.prototype.getQuotedLines = function(
 
   var i;
   var lines = [];
+
   for (i = startLine; i <= endLine; i++) {
     lines.push(this.sourceLines[i]);
   }
 
   var style = this.options.highlightStyle;
+
   if (startLine == endLine) {
     if (startColumn < endColumn) {
       lines[0] = this.setTextStyle(lines[0], style, startColumn, endColumn);
     }
   } else {
     lines[0] = this.setTextStyle(lines[0], style, startColumn);
+
     for (i = 1; i < lines.length - 1; i++) {
       lines[i] = this.setTextStyle(lines[i], style);
     }
+
     lines[lines.length - 1] = this.setTextStyle(
       lines[lines.length - 1],
       style,
@@ -97,12 +101,16 @@ TextQuoter.prototype.getQuotedLines = function(
     lines.unshift(
       this.drawHLine(startColumn, lines[0].length - startColumn, "_")
     );
+
     lines.push(this.drawHLine(0, endColumn, "^"));
   }
+
   var self = this;
+
   lines = lines.map(function(e) {
     return quoteString + e;
   });
+
   return lines;
 };
 
