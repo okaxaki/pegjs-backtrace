@@ -9,9 +9,12 @@
   "homepage": "https://github.com/okaxaki/pegjs-backtrace",
   "main": "src/main.js",
   "scripts": {},
-  "keywords": ["pegjs","tracer","PEG.js"],
+  "keywords": [
+    "pegjs",
+    "tracer",
+    "PEG.js"
+  ],
   "author": "Mitsutaka Okazaki",
   "license": "ISC",
-  "dependencies": {
-  }
+  "dependencies": {}
 }

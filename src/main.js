@@ -151,7 +151,7 @@ Tracer.prototype.printNode = function(level,node) {
 			return tailIndent + e;
 		}
 	});
-	
+
 	console.log(lines.join('\n'));
 
 };
@@ -173,7 +173,7 @@ Tracer.prototype.onEnter = function(evt) {
 	this.currentNode = node;
 
 	if(this.options.showTrace) {
-		this.printNode(this.currentLevel,this.currentNode);		
+		this.printNode(this.currentLevel,this.currentNode);
 	}
 
 	this.currentLevel++;
@@ -239,16 +239,16 @@ Tracer.prototype.onMatch = function(evt) {
 
 Tracer.prototype.buildNodeText = function(node,withSource,quoteString) {
 	var buf = [];
-	var location = [ 
-		node.location.start.line, ":", node.location.start.column, 
-		"-", 
-		node.location.end.line, ":", node.location.end.column, 
+	var location = [
+		node.location.start.line, ":", node.location.start.column,
+		"-",
+		node.location.end.line, ":", node.location.end.column,
 		].join('');
 
 	var title = [];
 	if(this.options.showTrace) {
 		title.push(this.setTextStyle("#" + node.number,{attribute:'thin'}));
-	}	
+	}
 	title.push(this.setTextStyle(location,{attribute:'thin'}));
 
 	if(this.options.showFullPath) {
@@ -338,7 +338,7 @@ Tracer.prototype.buildNodeGraph = function(list) {
 			node.style = nodes[column].style;
 			nodes[column] = node;
 			nodes = nodes.filter(function(e,i) {return (parentIndexes.indexOf(i)<0);});
-			lines = lines.concat( g.drawState(nodes,column,this.buildNodeText(node,this.options.showSource),list.length==0) );			
+			lines = lines.concat( g.drawState(nodes,column,this.buildNodeText(node,this.options.showSource),list.length==0) );
 		}
 
 		if(!this.options.showSource&&0<list.length) {
@@ -360,7 +360,7 @@ var _treeToList = function(tree) {
 			for(j=0;j<subs.length;j++) {
 				buf.push(subs[j]);
 			}
-		}	
+		}
 	}
 	return buf;
 };
