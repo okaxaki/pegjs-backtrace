@@ -38,26 +38,32 @@ TextUtil.truncate = function(str, maxlen) {
     var trlen = str.length - maxlen + 3;
     return "..." + str.slice(trlen);
   }
+
   return str;
 };
 
 TextUtil.setTextStyle = function(str, style, start, end) {
   if (style) {
     var buf = [];
+
     if (style.color != null) {
       buf.push(COLOR_MAP[style.color] || "37");
     }
+
     if (style.background != null) {
       buf.push(BG_COLOR_MAP[style.background] || "40");
     }
+
     if (style.attribute != null) {
       buf.push("" + (ATTR_MAP[style.attribute] || ""));
     }
+
     if (0 < buf.length) {
       if (start === undefined) {
         str = "\x1b[" + buf.join(";") + "m" + str + "\x1b[0m";
       } else {
         end = end ? end : str.length;
+
         str =
           str.slice(0, start) +
           "\x1b[" +
@@ -77,10 +83,12 @@ var __SPACE__ =
 
 TextUtil.makeIndent = function(indent) {
   var ret = "";
+
   while (__SPACE__.length < indent) {
     ret += __SPACE__;
     indent -= __SPACE__.length;
   }
+
   return ret + __SPACE__.slice(0, indent);
 };
 
