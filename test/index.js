@@ -17,45 +17,55 @@ let tracerOptions = [
     hiddenPaths: ["*/ws/*"],
     showFullPath: true,
     showSource: true,
-    matchesNode: (node, state) => {
-      if (state === "fail") {
-        if (node.type  === "rule.fail") {
-          return true;
-        } else {
-          return false;
-        }
-      } else {
-        if (node.type == "rule.match") {
-          return true;
-        } else {
-          return false;
-        }
+    matchesNode: function(node, options = {}) {
+      if (options.backtrace) {
+        return true;
       }
+
+      if (options.grep && !node.rule.includes(options.grep)) {
+        return false;
+      }
+
+      if (options.nodeType && options.nodeType != node.type) {
+        return false;
+      }
+
+      return true;
     }
   }
 ]
 
-let json = (input) => JSON.stringify(input, null, 2)
+let matchesOptions = [
+  {},
+  { grep: 'integer' },
+  { nodeType: 'rule.match', grep: 'integer' },
+]
 
-tracerOptions.forEach((options) => {
-  let tracerSuccess = new Tracer(success, options);
-  let tracerFailure = new Tracer(failure, options);
+let json = (input) => JSON.stringify(input)
 
-  let result = parser.parse(success, { tracer: tracerSuccess });
+tracerOptions.forEach((tracerOptions) => {
+  matchesOptions.forEach((matchesOptions) => {
+    let tracerSuccess = new Tracer(success, tracerOptions);
+    let tracerFailure = new Tracer(failure, tracerOptions);
 
-  console.log(`\n   SUCCESS FOR ${success}\n\noptions:${json(options)}`)
-  console.log("\n== getParseTreeString() ==\n")
-  console.log(tracerSuccess.getParseTreeString());
-  console.log("\n== result ==\n")
-  console.log(result)
+    let result = parser.parse(success, { tracer: tracerSuccess });
 
-  try {
-    parser.parse(failure, { tracer: tracerFailure });
-  } catch (e) {
-    console.log(`\n   FAILURE FOR ${failure}\n\noptions: ${json(options)}`)
-    console.log("\n== error message ==\n")
-    console.log(e.message);
-    console.log("\n== getBacktraceString() ==\n")
-    console.log(tracerFailure.getBacktraceString());
-  }
+    console.log(`\n   SUCCESS FOR ${success} \n`);
+    console.log(`\n  tracer options: ${json(tracerOptions)}\n`)
+    console.log(`\n== getParseTreeString(${json(matchesOptions)}) ==\n`)
+    console.log(tracerSuccess.getParseTreeString(matchesOptions));
+    console.log("\n== result ==\n")
+    console.log(result)
+
+    try {
+      parser.parse(failure, { tracer: tracerFailure });
+    } catch (e) {
+      console.log(`\n   FAILURE FOR ${failure} \n`);
+      console.log(`\n  tracer options: ${json(tracerOptions)}\n`)
+      console.log(`\n== getBacktraceString(${json(matchesOptions)}) ==\n`)
+      console.log(tracerFailure.getBacktraceString(matchesOptions));
+      console.log("\n== error message ==\n")
+      console.log(e.message);
+    }
+  })
 })

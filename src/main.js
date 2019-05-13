@@ -12,7 +12,8 @@ var defaultOptions = {
   showSource: true,
   showTrace: false,
   showFullPath: false,
-  maxPathLength: 64
+  maxPathLength: 64,
+  matchesNode: function(_node, _options = {}) { return true; },
 };
 
 var VLINE_STYLES = [
@@ -346,7 +347,7 @@ Tracer.prototype.getParseTree = function(type, node) {
   return ret;
 };
 
-Tracer.prototype.buildNodeGraph = function(list) {
+Tracer.prototype.buildNodeGraph = function(list, matchesOptions = {}) {
   var nodes = [];
   var lines = [];
   var g = new TextGraph({ useColor: this.options.useColor });
@@ -354,6 +355,8 @@ Tracer.prototype.buildNodeGraph = function(list) {
   while (0 < list.length) {
     var node = list.pop();
     var parentIndexes = [];
+
+    var matchesNode = this.options.matchesNode(node, matchesOptions)
 
     for (var i = 0; i < nodes.length; i++) {
       if (nodes[i].parent == node) {
@@ -367,13 +370,16 @@ Tracer.prototype.buildNodeGraph = function(list) {
       column = nodes.length;
       node.style = VLINE_STYLES[column % VLINE_STYLES.length];
       nodes.push(node);
-      lines = lines.concat(
-        g.drawState(
-          nodes,
-          column,
-          this.buildNodeText(node, this.options.showSource)
-        )
-      );
+
+      if (matchesNode) {
+        lines = lines.concat(
+          g.drawState(
+            nodes,
+            column,
+            this.buildNodeText(node, this.options.showSource)
+          )
+        );
+      }
     } else {
       column = parentIndexes.shift();
       lines = lines.concat(g.drawMergeEdges(parentIndexes, column, nodes));
@@ -384,18 +390,22 @@ Tracer.prototype.buildNodeGraph = function(list) {
         return parentIndexes.indexOf(i) < 0;
       });
 
-      lines = lines.concat(
-        g.drawState(
-          nodes,
-          column,
-          this.buildNodeText(node, this.options.showSource),
-          list.length == 0
-        )
-      );
+      if (matchesNode) {
+        lines = lines.concat(
+          g.drawState(
+            nodes,
+            column,
+            this.buildNodeText(node, this.options.showSource),
+            list.length == 0
+          )
+        );
+      }
     }
 
     if (!this.options.showSource && 0 < list.length) {
-      lines = lines.concat(g.drawState(nodes));
+      if (matchesNode) {
+        lines = lines.concat(g.drawState(nodes));
+      }
     }
   }
 
@@ -419,7 +429,9 @@ var _treeToList = function(tree) {
   return buf;
 };
 
-Tracer.prototype.getParseTreeString = function() {
+// matchesOptions will be passed to matchesNode
+// it will be what is provided and backtrace: false will be passed
+Tracer.prototype.getParseTreeString = function(matchesOptions = {}) {
   var lines = [];
   var tree = this.getParseTree();
   var list = _treeToList(tree);
@@ -429,12 +441,14 @@ Tracer.prototype.getParseTreeString = function() {
   }
 
   list.shift();
-  lines = this.buildNodeGraph(list);
+  lines = this.buildNodeGraph(list, { backtrace: false, ...matchesOptions });
 
   return lines.join("\n");
 };
 
-Tracer.prototype.getBacktraceString = function() {
+// matchesOptions will be passed to matchesNode
+// it will be what is provided and backtrace: true will be passed
+Tracer.prototype.getBacktraceString = function(matchesOptions = {}) {
   var lines = [];
   var tree = this.getParseTree("fail");
   var list = _treeToList(tree);
@@ -447,7 +461,7 @@ Tracer.prototype.getBacktraceString = function() {
   }
 
   list.shift();
-  lines = this.buildNodeGraph(list);
+  lines = this.buildNodeGraph(list, { backtrace: true, ...matchesOptions });
 
   return lines.join("\n");
 };

@@ -69,7 +69,7 @@ var tracer = new Tracer(text,{
   showTrace: false,
   maxSourceLines: 6,
   maxPathLength: 72,
-  matchesNode: function(node, state) { return true; },
+  matchesNode: function(node, options) { return true; },
 });
 ```
 
@@ -131,29 +131,27 @@ The `/` character can be used to represent the hierarchcal path of grammar rules
 
 ## matchesNode
 
-Matches the node and gives the current state (success/fail).
+Custom filtering of nodes printed by the graph.
 
-A node has many attributes, for instance `node.type` which can be:
+Two parameters are passed, `node` and `options`.
 
-- `rule.enter`
-- `rule.match`
-- `rule.fail`
+The `node` object is an internal representation which **may be subject to changes**.
+
+The `options` are the options passed to `getParseTreeString()` or
+`getBacktraceString()`.
+
+`{ backtrace: false }` is passed when calling `getParseTreeString()`.
+
+`{ backtrace: true }` is apssed when calling `getBacktraceString()`.
 
 ```js
 {
-  matchesNode: function(node, state) {
-    if (state === "fail") {
-      if (node.type  === "rule.fail") {
-        return true;
-      } else {
-        return false;
-      }
+  // example of showing only fail nodes when
+  matchesNode: function(node) {
+    if (node.type === "rule.fail") {
+      return true;
     } else {
-      if (node.type == "rule.match") {
-        return true;
-      } else {
-        return false;
-      }
+      return false;
     }
   }
 }
