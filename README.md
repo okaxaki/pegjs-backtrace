@@ -48,7 +48,7 @@ var text = '2*(3/4)';
 var tracer = new Tracer(text); // input text is required.
 
 try {
-  Parser.parse(text,{tracer:tracer});
+  Parser.parse(text, { tracer:tracer });
 } catch(e) {
   console.log(tracer.getBacktraceString());
 }
@@ -63,12 +63,13 @@ When creating pegjs-backtrace instance, you can provide some options as follows.
 ```js
 var Tracer = require('pegjs-backtrace');
 var tracer = new Tracer(text,{
-  parent:null,
-  hiddenPaths:[],
-  useColor:true,
-  showTrace:false,
-  maxSourceLines:6,
-  maxPathLength:72,
+  parent: null,
+  hiddenPaths: [],
+  useColor: true,
+  showTrace: false,
+  maxSourceLines: 6,
+  maxPathLength: 72,
+  matchesNode: function(node, state) { return true; },
 });
 ```
 
@@ -80,7 +81,7 @@ This option specifies a parent Tracer instance. Once the option is given, the pa
 var Parser = require('./parser');
 var Tracer = require('pegjs-backtrace');
 var tracer = new Tracer(text,{
-  parent:new Parser.DefaultTracer(),
+  parent: new Parser.DefaultTracer(),
 });
 ```
 
@@ -127,6 +128,36 @@ var tracer = new Tracer(text,{
 The type of the pattern must be `string` or `RegExp`. Even the pattern is `string`, it may also contain RegExp meta characters.
 
 The `/` character can be used to represent the hierarchcal path of grammar rules. If the pattern is string like `"FOO"`, it is treated as the regular expression `/(^|\/)FOO(\/|$)/`.
+
+## matchesNode
+
+Matches the node and gives the current state (success/fail).
+
+A node has many attributes, for instance `node.type` which can be:
+
+- `rule.enter`
+- `rule.match`
+- `rule.fail`
+
+```js
+{
+  matchesNode: function(node, state) {
+    if (state === "fail") {
+      if (node.type  === "rule.fail") {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      if (node.type == "rule.match") {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+}
+```
 
 # Limitation
 
