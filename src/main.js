@@ -14,6 +14,7 @@ var defaultOptions = {
   showFullPath: false,
   maxPathLength: 64,
   matchesNode: function(_node, _options = {}) { return true; },
+  output: console.log,
 };
 
 var VLINE_STYLES = [
@@ -165,7 +166,7 @@ Tracer.prototype.printNode = function(level, node) {
     }
   });
 
-  console.log(lines.join("\n"));
+  this.options.output(lines.join("\n"));
 };
 
 Tracer.prototype.onEnter = function(evt) {
