@@ -70,6 +70,7 @@ var tracer = new Tracer(text,{
   maxSourceLines: 6,
   maxPathLength: 72,
   matchesNode: function(node, options) { return true; },
+  output: console.log,
 });
 ```
 
@@ -156,6 +157,11 @@ The `options` are the options passed to `getParseTreeString()` or
   }
 }
 ```
+
+## output
+
+Sets the output destination for the backtrace. The default is `console.log`.
+
 
 # Limitation
 
